@@ -1,0 +1,16 @@
+#!/bin/bash
+
+echo "From fairest creatures we desire increase,"
+echo "That thereby beauty's rose might never die,"
+echo "But as the riper should by time decease,"
+echo "His tender heir might bear his memory:"
+echo "But thou, contracted to thine own bright eyes,"
+echo "Feed'st thy light's flame with self-substantial fuel,"
+echo "Making a famine where abundance lies,"
+echo "Thyself thy foe, to thy sweet self too cruel."
+echo "Thou that art now the world's fresh ornament"
+echo "And only herald to the gaudy spring,"
+echo "Within thine own bud buriest thy content"
+echo "And, tender churl, mak'st waste in niggarding."
+echo "Pity the world, or else this glutton be,"
+echo "To eat the world's due, by the grave and thee."
