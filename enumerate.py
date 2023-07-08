@@ -1,11 +1,8 @@
-countries = ['Switzerland', 'Estonia', 'Sweden', 'Latvia', 'Butan', 'Nepal', 'France']
+from sys import *
+from collections import OrderedDict
 
-d = enumerate(countries, start=1)
+md = {1: 1, 2: 2, 3: 3}
+mod = OrderedDict({1: 1, 2: 2, 3: 3})
 
-print(next(d))
-print(next(d))
-print(next(d))
-print(next(d))
-print(next(d))\
-print(next(d))
-print(next(d))
+print(getsizeof(md))
+print(getsizeof(mod))
