@@ -2,7 +2,7 @@ import random
 import numpy as np
 import tables_main_and_free
 import winning_bet_lines
-import paytable1
+import paytable_num
 
 game_start_deposit = 50
 game_current_deposit = game_start_deposit
@@ -31,12 +31,8 @@ while total_spins_played < total_spins:
 
     # Транспонируем результат
     selected_elements = np.array(selected_elements).T.tolist()
-    # Выводим выбранные элементы
-    # for elements in selected_elements:
-    #     print(elements)
 
     elements_set = set(element for row in selected_elements for element in row)
-    # print(elements_set)
 
     spin_coords = []
 
@@ -47,9 +43,6 @@ while total_spins_played < total_spins:
                 if value == element:
                     coords.append((i, j))
         spin_coords.append(coords)
-    # Выводим координаты элементов
-    # for coords in spin_coords:
-    #     print(coords)
 
     winning_lines_found = []
 
@@ -57,15 +50,6 @@ while total_spins_played < total_spins:
         for j, winning_line in enumerate(winning_bet_lines.winning_lines):
             if set(spin_line) == set(winning_line):
                 winning_lines_found.append((i, j))
-
-    # if winning_lines_found:
-    #     print("Найдены выигрышные линии:")
-    #     for line in winning_lines_found:
-    #         spin_line_index, winning_line_index = line
-    #         print("Выигрышная линия {} в spin_coords соответствует выигрышной линии {} в winning_lines".format(
-    #             spin_line_index, winning_line_index))
-    # else:
-    #     print("Нет выигрышных линий.")
 
     element_counts = {}
 
@@ -75,11 +59,11 @@ while total_spins_played < total_spins:
 
     win_condition = 0
     for element, count in element_counts.items():
-        if element in paytable1.paytable and count in paytable1.paytable[element]:
-            if type(paytable1.paytable[element][count]) == float:
-                win_condition += paytable1.paytable[element][count]
-            elif type(paytable1.paytable[element][count]) == int:
-                win_condition += paytable1.paytable[element][count]
+        if element in paytable_num.paytable and count in paytable_num.paytable[element]:
+            if type(paytable_num.paytable[element][count]) == float:
+                win_condition += paytable_num.paytable[element][count]
+            elif type(paytable_num.paytable[element][count]) == int:
+                win_condition += paytable_num.paytable[element][count]
             else:
                 pass
 
@@ -101,7 +85,7 @@ while total_spins_played < total_spins:
         game_spins = 0
 
 # Вычисляем отношение с округлением до десятитысячных
-expected_value = round((game_start_deposit * total_games + total_winnings) / (total_spins_played * bet), 8)
+expected_value = round((game_start_deposit * total_games + total_winnings) / (total_spins_played * bet), 4)
 
 # Выводим результат
 print("Игра окончена")
