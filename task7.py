@@ -1,7 +1,9 @@
 import sys
 import time
 
-sys.setrecursionlimit(5000)
+sys.setrecursionlimit(3000)
+sys.set_int_max_str_digits(50000)
+
 # точка отсчета времени
 start = time.time()
 
@@ -20,7 +22,7 @@ def factorial(x):
     return factorial(x - 1) * x
 
 
-print(factorial(5000))
+print(factorial(2995))
 
 # собственно время работы программы
 end = time.time() - start
