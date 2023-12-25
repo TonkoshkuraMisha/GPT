@@ -97,7 +97,7 @@ def main():
         draw_grid(screen, grid)
 
         pygame.display.flip()
-        clock.tick(2)  # Set the frame rate
+        clock.tick(4)  # Set the frame rate
 
         generations += 1
 
