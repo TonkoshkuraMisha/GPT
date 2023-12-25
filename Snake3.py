@@ -25,13 +25,15 @@ life = 3
 score = 0
 record = 0
 
-
 class Snake:
-    def __init__(self, grid):
+    def __init__(self, grid, initial_speed):
         self.grid = grid
         self.body = [(GRID_WIDTH // 2, GRID_HEIGHT // 2)]
         self.direction = (1, 0)
         self.grow_pending = 0
+        self.speed = initial_speed
+        self.move_timer = 0
+        self.move_period = 1.0 / self.speed  # Период движения в секундах
 
     def move(self):
         head = self.body[0]
@@ -54,12 +56,18 @@ class Snake:
                 head[1] < 0 or head[1] >= GRID_HEIGHT
         )
 
+    def update_speed(self, dt):
+        self.move_timer += dt
+        if self.move_timer >= self.move_period:
+            self.speed += 0.01  # Увеличение скорости на 0.01 каждую секунду
+            self.move_period = 1.0 / self.speed
+            self.move_timer = 0
+
     def draw(self, surface):
         for segment in self.body:
             x, y = segment[0] * GRID_SIZE, segment[1] * GRID_SIZE
             pygame.draw.rect(surface, LIGHT_GREEN, (x, y, GRID_SIZE, GRID_SIZE))
             pygame.draw.rect(surface, BLACK, (x, y, GRID_SIZE, GRID_SIZE), 1)  # Отрисовка границ
-
 
 class Apple:
     def __init__(self, grid):
@@ -73,16 +81,42 @@ class Apple:
         x, y = self.position[0] * GRID_SIZE, self.position[1] * GRID_SIZE
         pygame.draw.rect(surface, PASTEL_RED, (x, y, GRID_SIZE, GRID_SIZE))
 
+class FlashingApple(Apple):
+    def __init__(self, grid):
+        super().__init__(grid)
+        self.is_flashing = False
+        self.flash_timer = 0
+        self.flash_period = 1.0  # Период мигания в секундах
+        self.move_timer = 0
+        self.move_period = 10  # Период изменения позиции в секундах
+
+    def update(self, dt):
+        self.flash_timer += dt
+        if self.flash_timer >= self.flash_period:
+            self.is_flashing = not self.is_flashing
+            self.flash_timer = 0
+
+        # Изменение позиции каждые 10 секунд
+        self.move_timer += dt
+        if self.move_timer >= self.move_period:
+            self.position = self.random_position()
+            self.move_timer = 0
+
+    def draw(self, surface):
+        if self.is_flashing:
+            # Отрисовка мигающего яблока
+            super().draw(surface)
+        else:
+            # Отрисовка обычного яблока
+            pygame.draw.rect(surface, PASTEL_RED, (self.position[0] * GRID_SIZE, self.position[1] * GRID_SIZE, GRID_SIZE, GRID_SIZE))
 
 def initialize_grid():
     return [[0] * GRID_HEIGHT for _ in range(GRID_WIDTH)]
-
 
 def update_record(score):
     global record
     if score > record:
         record = score
-
 
 def update_grid(snake):
     for col in range(GRID_WIDTH):
@@ -94,7 +128,6 @@ def update_grid(snake):
         if 0 <= col < GRID_WIDTH and 0 <= row < GRID_HEIGHT:
             snake.grid[col][row] = 1
 
-
 def draw_grid(surface, grid):
     for col in range(GRID_WIDTH):
         for row in range(GRID_HEIGHT):
@@ -102,19 +135,22 @@ def draw_grid(surface, grid):
             pygame.draw.rect(surface, BLACK, (x, y, GRID_SIZE, GRID_SIZE))
             pygame.draw.rect(surface, PASTEL_DARK_GREEN, (x + 1, y + 1, GRID_SIZE - 2, GRID_SIZE - 2))
 
-
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SRCALPHA)
 pygame.display.set_caption("Змейка")
 
 grid = initialize_grid()
-snake = Snake(grid)
+initial_speed = 5  # Начальная скорость
+snake = Snake(grid, initial_speed)
 apple = Apple(grid)
+flashing_apple = FlashingApple(grid)
 
 snake_timer = pygame.time.Clock()
 
 pygame.mixer.music.play(-1)
 
 while True:
+    dt = snake_timer.tick(30) / 1000.0
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -131,6 +167,7 @@ while True:
 
     snake.move()
     update_grid(snake)
+    snake.update_speed(dt)
 
     if snake.body[0] == apple.position:
         snake.grow()
@@ -139,58 +176,53 @@ while True:
         update_record(score)
         eat_sound.play()
 
+        if score % 100 == 0 and score != 0:
+            life += 1
+
+    flashing_apple.update(dt)
+
+    if snake.body[0] == flashing_apple.position:
+        snake.grow()
+        flashing_apple.position = flashing_apple.random_position()
+        score += 3
+        update_record(score)
+        eat_sound.play()
+
     if snake.check_collision():
         game_over_sound.play()
         if life > 0:
             life -= 1
             pygame.time.delay(1000)
-            snake = Snake(grid)  # Новая змейка
+            snake = Snake(grid, initial_speed)  # Новая змейка
         if life <= 0:
             pygame.mixer.music.stop()
             time.sleep(2)  # Пауза после проигрыша последней жизни
             life = 3
             score = 0
             grid = initialize_grid()
-            snake = Snake(grid)
+            snake = Snake(grid, initial_speed)
             apple = Apple(grid)
+            flashing_apple = FlashingApple(grid)
             pygame.mixer.music.play(-1)
-
-    if len(snake.body) < 10:
-        snake_timer.tick(8)
-    elif 10 <= len(snake.body) < 20:
-        snake_timer.tick(10)
-    elif 20 <= len(snake.body) < 30:
-        snake_timer.tick(12)
-    else:
-        snake_timer.tick(15)
 
     screen.fill(PASTEL_GREEN)
     draw_grid(screen, grid)
     snake.draw(screen)
     apple.draw(screen)
+    flashing_apple.draw(screen)
 
     font = pygame.font.Font("snake_src/orbitron/Orbitron-Bold.ttf", 24)
-    # font.set_bold(True)  # Сделать шрифт жирным
-    score_text = font.render(f"Score: {score}", True, (255, 255, 0))  # Жёлтый цвет
-    record_text = font.render(f"Record: {record}", True, (255, 255, 0))  # Жёлтый цвет
-    lives_text = font.render(f"Life: {life}", True, (255, 255, 0))  # Жёлтый цвет
+    score_text = font.render(f"Score: {score}", True, (255, 255, 0, 8))
+    record_text = font.render(f"Record: {record}", True, (255, 255, 0, 8))
+    lives_text = font.render(f"Life: {life}", True, (255, 255, 0, 8))
     screen.blit(score_text, (WIDTH - 160, 30))
     screen.blit(record_text, (WIDTH - 160, 60))
     screen.blit(lives_text, (WIDTH - 160, 90))
 
-    pygame.display.flip()
     for i in range(life):
-        pygame.draw.rect(screen, PASTEL_RED, (WIDTH - 160 + i * 30, 120, 20, 20))  # Отрисовка сердец
-    # heart_font = pygame.font.Font(pygame.font.get_default_font(), 24)
-    # heart_symbol = heart_font.render(u'\u2764', True, PASTEL_RED)  # Используйте Unicode-код для символа сердца
+        pygame.draw.rect(screen, PASTEL_RED + (8,), (WIDTH - 160 + i * 30, 120, 20, 20))  # Отрисовка сердец
 
-    # for i in range(life):
-    #     screen.blit(heart_symbol, (WIDTH - 150 + i * 30, 84))
-
-    for i in range(len(snake.body)):
-        x, y = snake.body[i][0] * GRID_SIZE, snake.body[i][1] * GRID_SIZE
-        pygame.draw.rect(screen, LIGHT_GREEN, (x, y, GRID_SIZE, GRID_SIZE))
-        pygame.draw.rect(screen, BLACK, (x, y, GRID_SIZE, GRID_SIZE), 1)  # Отрисовка границ тела змейки
+    pygame.display.flip()
 
     if life <= 0:
         font = pygame.font.Font("snake_src/arcade_font.ttf", 72)
@@ -215,8 +247,8 @@ while True:
                     life = 3
                     score = 0
                     grid = initialize_grid()
-                    snake = Snake(grid)
+                    snake = Snake(grid, initial_speed)
                     apple = Apple(grid)
+                    flashing_apple = FlashingApple(grid)
                     pygame.mixer.music.play(-1)
-
     pygame.display.flip()

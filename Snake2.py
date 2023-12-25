@@ -24,6 +24,7 @@ game_over_sound = pygame.mixer.Sound("snake_src/game_over_sound.wav")
 life = 3
 score = 0
 record = 0
+extra_life = 0
 
 
 class Snake:
@@ -103,7 +104,7 @@ def draw_grid(surface, grid):
             pygame.draw.rect(surface, PASTEL_DARK_GREEN, (x + 1, y + 1, GRID_SIZE - 2, GRID_SIZE - 2))
 
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SRCALPHA)
 pygame.display.set_caption("Змейка")
 
 grid = initialize_grid()
@@ -139,6 +140,10 @@ while True:
         update_record(score)
         eat_sound.play()
 
+        if score % 100 == 0:
+            extra_life += 1
+            life += 1
+
     if snake.check_collision():
         game_over_sound.play()
         if life > 0:
@@ -150,6 +155,7 @@ while True:
             time.sleep(2)  # Пауза после проигрыша последней жизни
             life = 3
             score = 0
+            extra_life = 0
             grid = initialize_grid()
             snake = Snake(grid)
             apple = Apple(grid)
@@ -164,29 +170,27 @@ while True:
     else:
         snake_timer.tick(15)
 
-    screen.fill(PASTEL_GREEN)
+    screen.fill((PASTEL_GREEN[0], PASTEL_GREEN[1], PASTEL_GREEN[2], 128))
     draw_grid(screen, grid)
     snake.draw(screen)
     apple.draw(screen)
 
     font = pygame.font.Font("snake_src/orbitron/Orbitron-Bold.ttf", 24)
-    # font.set_bold(True)  # Сделать шрифт жирным
-    score_text = font.render(f"Score: {score}", True, (255, 255, 0))  # Жёлтый цвет
-    record_text = font.render(f"Record: {record}", True, (255, 255, 0))  # Жёлтый цвет
-    lives_text = font.render(f"Life: {life}", True, (255, 255, 0))  # Жёлтый цвет
+    score_text = font.render(f"Score: {score}", True, (255, 255, 0, 128))
+    record_text = font.render(f"Record: {record}", True, (255, 255, 0, 128))
+    lives_text = font.render(f"Life: {life}", True, (255, 255, 0, 128))
     screen.blit(score_text, (WIDTH - 160, 30))
     screen.blit(record_text, (WIDTH - 160, 60))
     screen.blit(lives_text, (WIDTH - 160, 90))
 
+    for i in range(life + extra_life):
+        pygame.draw.rect(screen, PASTEL_RED + (8,), (WIDTH - 160 + i * 30, 120, 20, 20))  # Отрисовка сердец
+
+    for i in range(extra_life):
+        pygame.draw.rect(screen, PASTEL_RED + (8,),
+                         (WIDTH - 160 + (life + i) * 30, 120, 20, 20))  # Дополнительные сердца
+
     pygame.display.flip()
-    for i in range(life):
-        pygame.draw.rect(screen, PASTEL_RED, (WIDTH - 160 + i * 30, 120, 20, 20))  # Отрисовка сердец
-    # heart_font = pygame.font.Font(pygame.font.get_default_font(), 24)
-    # heart_symbol = heart_font.render(u'\u2764', True, PASTEL_RED)  # Используйте Unicode-код для символа сердца
-
-    # for i in range(life):
-    #     screen.blit(heart_symbol, (WIDTH - 150 + i * 30, 84))
-
     for i in range(len(snake.body)):
         x, y = snake.body[i][0] * GRID_SIZE, snake.body[i][1] * GRID_SIZE
         pygame.draw.rect(screen, LIGHT_GREEN, (x, y, GRID_SIZE, GRID_SIZE))
@@ -194,12 +198,12 @@ while True:
 
     if life <= 0:
         font = pygame.font.Font("snake_src/arcade_font.ttf", 72)
-        game_over_text = font.render("Game Over", True, (255, 0, 0))  # Красный цвет
+        game_over_text = font.render("Game Over", True, (255, 0, 0, 128))  # Красный цвет
         screen.blit(game_over_text, (WIDTH // 2 - 180, HEIGHT // 2 - 36))
 
         font = pygame.font.Font("snake_src/arcade_font.ttf", 36)
-        play_again_text = font.render("Play Again", True, (255, 255, 255))  # Белый цвет
-        pygame.draw.rect(screen, (0, 0, 0), (WIDTH // 2 - 90, HEIGHT // 2 + 50, 180, 40))
+        play_again_text = font.render("Play Again", True, (255, 255, 255, 128))  # Белый цвет
+        pygame.draw.rect(screen, (0, 0, 0, 128), (WIDTH // 2 - 90, HEIGHT // 2 + 50, 180, 40))
         screen.blit(play_again_text, (WIDTH // 2 - 80, HEIGHT // 2 + 56))
 
         pygame.display.flip()
@@ -214,6 +218,7 @@ while True:
                     1] <= HEIGHT // 2 + 90:
                     life = 3
                     score = 0
+                    extra_life = 0
                     grid = initialize_grid()
                     snake = Snake(grid)
                     apple = Apple(grid)
