@@ -161,7 +161,8 @@ def draw_info(surface, score, record, life):
         pygame.draw.rect(surface, PASTEL_RED + (128,), (WIDTH - 180 + i * 30, 120, 20, 20))
 
 
-def check_extra_life(score, extra_life):
+def add_extra_life(score):
+    was_added = False
     extra_life = (score // 10)%2
     return extra_life
 
@@ -199,7 +200,7 @@ while True:
     snake.move()
     update_grid(snake)
     snake.update_speed(dt, score)
-    check_extra_life(score, 0)
+    # check_extra_life(score, 0)
 
     if snake.body[0] == apple.position:
         snake.grow()
